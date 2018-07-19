@@ -14,6 +14,56 @@ const jwt = new Jwt();
 
 const router: Router = Router();
 
+router.post('/', async (req: Request, res: Response) => {
+  let db = req.db;
+  let username: string = req.body.username;
+  let password: string = req.body.password;
+  let typeId: string = req.body.typeId;
+
+  let encPassword = crypto
+    .createHash('md5')
+    .update(password)
+    .digest('hex');
+  let token = null;
+  let isError = false;
+
+  if (typeId == '1') {
+    let rs: any = await loginModel.doTechnicianLogin(db, username, encPassword);
+    if (rs.length) {
+      let payload: any = {};
+      payload.id = rs[0].technician_id;
+      payload.firstName = rs[0].first_name + ' ' + rs[0].last_name;
+      payload.usertype = 'admin';
+
+      token = jwt.sign(payload);
+    } else {
+      isError = true;
+    }
+  } else {
+    let rs: any = await loginModel.doCustomerLogin(db, username, encPassword);
+    if (rs.length) {
+      let payload: any = {};
+      payload.id = rs[0].customer_id;
+      payload.firstName = rs[0].first_name + ' ' + rs[0].last_name;
+      payload.usertype = 'staff';
+
+      token = jwt.sign(payload);
+    } else {
+      isError = true;
+    }
+  }
+
+
+  if (isError) {
+    res.send({ ok: false, error: 'ชื่อผู้ใช้งาน รหัสผ่าน ไม่ถูกต้อง' })
+  } else {
+    res.send({ ok: true, token: token });
+  }
+
+
+});
+
+
 router.post('/customer', async (req: Request, res: Response) => {
   let username: string = req.body.username;
   let password: string = req.body.password;
@@ -29,7 +79,7 @@ router.post('/customer', async (req: Request, res: Response) => {
       let payload = {
         fullname: `${rs[0].first_name} ${rs[0].last_name}`,
         id: rs[0].customer_id,
-        type: 'customer'
+        uertype: 'staff'
       }
 
       let token = jwt.sign(payload);
@@ -57,7 +107,8 @@ router.post('/technician', async (req: Request, res: Response) => {
 
       let payload = {
         fullname: rs[0].fullname,
-        username: username
+        username: username,
+        uertype: 'admin'
       }
 
       let token = jwt.sign(payload);
