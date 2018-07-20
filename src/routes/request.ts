@@ -15,14 +15,30 @@ router.get('/', async (req: Request, res: Response) => {
 
   let db = req.db;
   let customerId = req.decoded.id; //จาก token
+  let limit = +req.query.limit || 10;
+  let offset = +req.query.offset || 0;
   try {
 
-    let rs: any = await requestModel.getlist(db, customerId);
-    res.send({ ok: true, rows: rs })
+    let rs: any = await requestModel.getlist(db, customerId, limit, offset);
+    let rsTotal: any = await requestModel.getTotal(db, customerId);
+
+    res.send({ ok: true, rows: rs, total: rsTotal[0].total })
   } catch (error) {
     res.send({ ok: false, error: error.message });
   }
 
+  router.get('/logs/:requestId', async (req: Request, res: Response) => {
+    let db = req.db;
+    let requestId = req.params.requestId;
+
+    try {
+      let rs: any = await requestModel.getRequestLog(db, requestId);
+      res.send({ ok: true, rows: rs[0] });
+    } catch (error) {
+      res.send({ ok: false, error: error.message });
+    }
+
+  });
 
 
 
