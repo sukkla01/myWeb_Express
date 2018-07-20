@@ -7,6 +7,22 @@ export class RequestModel {
       .insert(data);
   }
 
+  delRequest(db: Knex, requestId: any) {
+    console.log(requestId);
+    return db('requests')
+      .where('request_id', requestId)
+      .del();
+  }
+
+  getDetail(db: Knex, requestId: any) {
+    console.log(requestId);
+    return db('requests')
+      .where('request_id', requestId)
+
+  }
+
+
+
 
   getlist(db: Knex, customerId: any, limit: number, offset: number) {
     return db('requests as r')
